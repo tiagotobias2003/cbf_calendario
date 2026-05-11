@@ -42,6 +42,21 @@ jogo = CbfCalendario.jogo_partida('832031')
 stats = CbfCalendario.estatisticas_agregadas(jogo)
 ```
 
+## `partida_completa` e `jogo_partida`
+
+Os dois consultam o mesmo endpoint da CBF: `GET /api/cbf/jogos/:id`. A diferença é **o que é devolvido**:
+
+- **`partida_completa(id_jogo)`** — retorna o **payload inteiro** da API (hash com chaves string), em geral no formato `{ "jogo" => { ... } }`. Use quando precisar do JSON completo da resposta (incluindo o envelope com `"jogo"` e qualquer outra chave de topo que a API enviar).
+
+- **`jogo_partida(id_jogo)`** — retorna **apenas** o hash interno `"jogo"` (mandante, visitante, `registros`, etc.). É o equivalente a `partida_completa(id_jogo)['jogo']`, útil quando você só trabalha com os dados da partida.
+
+| Método | Retorno típico |
+|--------|----------------|
+| `partida_completa` | `{ "jogo" => { ... } }` |
+| `jogo_partida` | `{ "id_jogo" => ..., "mandante" => {...}, ... }` |
+
+Se você já chamou `partida = CbfCalendario.partida_completa(id)`, prefira `partida['jogo']` em vez de chamar `jogo_partida(id)` de novo na mesma rotina (evita uma segunda requisição HTTP idêntica).
+
 ## Funcionalidades principais
 
 ### 1) Jogos do dia
