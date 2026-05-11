@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.2] - 2026-05-11
+
+- `Client#clube_por_id`: fallback para página pública de times quando endpoints `/api/cbf/clubes/*` e `/api/cbf/times/*` retornam 404
+- Suporte a redirecionamentos HTTP (ex.: 308) nas requisições internas do cliente
+- README atualizado com exemplo de retorno de `clube_por_id` incluindo contexto e atletas
+
 ## [0.3.1] - 2026-05-11
 
 - `Client#jogos_pendentes_no_dia`: chave renomeada de `placar_ou_horario` para `horario`

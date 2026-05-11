@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'date'
+require 'cgi'
 require 'json'
 require 'net/http'
 require 'openssl'
@@ -63,8 +64,19 @@ module CbfCalendario
     # Saída: { clube_id: "123", clube: { ... } }
     def clube_por_id(id_clube)
       cid = Client.normalize_id_clube!(id_clube)
-      payload = buscar_clube_payload(cid)
-      clube = extrair_clube_do_payload(payload, cid)
+      clube = {}
+
+      begin
+        payload = buscar_clube_payload(cid)
+        clube = extrair_clube_do_payload(payload, cid)
+      rescue HttpError
+        # Fallback: quando a API não expõe o clube por ID, usa a página pública.
+      end
+
+      if !clube.is_a?(Hash) || clube.empty?
+        clube = buscar_clube_por_scraping(cid)
+      end
+
       raise HttpError, 'Resposta sem dados do clube' unless clube.is_a?(Hash) && !clube.empty?
 
       { clube_id: cid, clube: clube }
@@ -180,6 +192,15 @@ module CbfCalendario
     end
 
     def request_json(uri)
+      res = perform_get(uri, accept: 'application/json')
+      JSON.parse(res.body)
+    end
+
+    def request_text(uri)
+      perform_get(uri, accept: 'text/html,*/*').body.to_s
+    end
+
+    def perform_get(uri, accept:, redirects_left: 5)
       Net::HTTP.start(
         uri.host,
         uri.port,
@@ -190,13 +211,24 @@ module CbfCalendario
         cert_store: ssl_cert_store
       ) do |http|
         req = Net::HTTP::Get.new(uri)
-        req['Accept'] = 'application/json'
+        req['Accept'] = accept
         res = http.request(req)
+
+        if res.is_a?(Net::HTTPRedirection)
+          raise HttpError, 'Muitas redireções na requisição HTTP' if redirects_left <= 0
+
+          location = res['location'].to_s
+          raise HttpError, 'Redirecionamento HTTP sem header Location' if location.empty?
+
+          next_uri = URI.join(uri.to_s, location)
+          return perform_get(next_uri, accept: accept, redirects_left: redirects_left - 1)
+        end
+
         unless res.is_a?(Net::HTTPSuccess)
           raise HttpError, "HTTP #{res.code}: #{res.message}"
         end
 
-        JSON.parse(res.body)
+        res
       end
     end
 
@@ -320,6 +352,28 @@ module CbfCalendario
       raise HttpError, "Não foi possível buscar o clube #{id_clube}. Tentativas: #{errors.join(' | ')}"
     end
 
+    def buscar_clube_por_scraping(id_clube)
+      index_html = request_text(URI.join(base_url, '/futebol-brasileiro/times'))
+      path = extrair_path_publica_clube(index_html, id_clube)
+      raise HttpError, "Clube #{id_clube} não encontrado na página pública de times" if path.to_s.empty?
+
+      html = request_text(URI.join(base_url, path))
+      nome = extrair_h1(html)
+      atletas = extrair_atletas_da_tabela(html)
+      competicao, categoria, ano = extrair_contexto_path(path)
+
+      {
+        'id_clube' => id_clube.to_i,
+        'nome' => nome,
+        'competicao' => competicao,
+        'categoria' => categoria,
+        'ano' => ano,
+        'escudo' => "https://conteudo.cbf.com.br/clubes/#{id_clube}/escudo.jpg",
+        'pagina' => "#{base_url}#{path}",
+        'atletas' => atletas
+      }.reject { |_, v| v.nil? || (v.respond_to?(:empty?) && v.empty?) }
+    end
+
     def extrair_clube_do_payload(payload, id_clube)
       if payload.is_a?(Hash)
         return payload if campo_id_clube(payload) == id_clube
@@ -339,6 +393,45 @@ module CbfCalendario
       return hash['id_time'].to_s.strip unless hash['id_time'].to_s.strip.empty?
 
       hash['id'].to_s.strip
+    end
+
+    def extrair_path_publica_clube(html, id_clube)
+      re = %r{href="(/futebol-brasileiro/times/[^"]*/#{Regexp.escape(id_clube.to_s)}(?:\?[^"]*)?)"}
+      m = html.to_s.match(re)
+      m ? m[1] : ''
+    end
+
+    def extrair_h1(html)
+      m = html.to_s.match(%r{<h1[^>]*>(.*?)</h1>}m)
+      return '' unless m
+
+      limpar_html(m[1])
+    end
+
+    def extrair_contexto_path(path)
+      m = path.to_s.match(%r{\A/futebol-brasileiro/times/([^/]+)/([^/]+)/(\d{4})/\d+})
+      return [nil, nil, nil] unless m
+
+      [m[1], m[2], m[3]]
+    end
+
+    def extrair_atletas_da_tabela(html)
+      rows = html.to_s.scan(%r{<tr[^>]*>(.*?)</tr>}m).map(&:first)
+      rows.map do |row|
+        cols = row.scan(%r{<td[^>]*>(.*?)</td>}m).map { |c| limpar_html(c.first) }
+        next if cols.empty?
+
+        {
+          'nome' => cols[0].to_s,
+          'apelido' => cols[1].to_s,
+          'clube_atual' => cols[2].to_s
+        }.reject { |_, v| v.empty? }
+      end.compact
+    end
+
+    def limpar_html(texto)
+      sem_tags = texto.to_s.gsub(%r{<[^>]+>}, ' ')
+      CGI.unescapeHTML(sem_tags).gsub(/\s+/, ' ').strip
     end
   end
 end

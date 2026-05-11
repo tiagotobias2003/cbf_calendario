@@ -219,8 +219,12 @@ Monta links da página da partida e das páginas de times.
 #      clube: {
 #        "id_clube" => 20001,
 #        "nome" => "Time Exemplo",
-#        "sigla" => "TEX",
+#        "competicao" => "campeonato-brasileiro",
+#        "categoria" => "serie-a",
+#        "ano" => "2026",
 #        "escudo" => "https://...",
+#        "pagina" => "https://www.cbf.com.br/futebol-brasileiro/times/...",
+#        "atletas" => [ ... ],
 #        ...
 #      }
 #    }
