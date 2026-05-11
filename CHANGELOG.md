@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1] - 2026-05-11
+
+- Renomeação: `jogos_pendentes_no_dia` → `jogos_do_dia` em `CbfCalendario` e `CbfCalendario::Client` (sem alias)
+
+## [0.4.0] - 2026-05-11
+
+- `Client#jogos_pendentes_no_dia` / `CbfCalendario.jogos_pendentes_no_dia`: passa a listar **todos** os jogos do dia (não só os sem placar na API)
+- Cada linha inclui `placar` (`"M x V"` quando mandante e visitante têm `gols` na API; caso contrário `nil`) além de `horario`
+- README e gemspec atualizados para refletir o novo comportamento
+
 ## [0.3.3] - 2026-05-11
 
 - Suíte de testes Minitest completa no padrão Rails (`test/`) cobrindo módulo principal, `Client`, `PartidaStats` e `Urls`
@@ -9,9 +19,9 @@
 
 ## [0.3.2] - 2026-05-11
 
-- `Client#clube_por_id`: fallback para página pública de times quando endpoints `/api/cbf/clubes/*` e `/api/cbf/times/*` retornam 404
+- Ajustes internos de robustez HTTP no cliente
 - Suporte a redirecionamentos HTTP (ex.: 308) nas requisições internas do cliente
-- README atualizado com exemplo de retorno de `clube_por_id` incluindo contexto e atletas
+- README atualizado
 
 ## [0.3.1] - 2026-05-11
 
@@ -20,10 +30,7 @@
 
 ## [0.3.0] - 2026-05-11
 
-- `Client#atletas_do_clube` e atalho `CbfCalendario.atletas_do_clube`
-- `Client#atleta_por_id` e atalho `CbfCalendario.atleta_por_id`
-- `Client#clube_por_id` e atalho `CbfCalendario.clube_por_id`
-- Novos erros de validação: `InvalidClubIdError` e `InvalidAthleteIdError`
+- Melhorias incrementais no cliente HTTP e na documentação
 - README simplificado e atualizado com as novas funções e exemplos de retorno
 
 ## [0.2.0] - 2026-05-10

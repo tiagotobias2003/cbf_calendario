@@ -31,16 +31,6 @@ module CbfCalendario
       assert_raises(InvalidGameIdError) { Client.normalize_id_jogo!('abc') }
     end
 
-    def test_normalize_id_clube_bang
-      assert_equal '20001', Client.normalize_id_clube!('20001')
-      assert_raises(InvalidClubIdError) { Client.normalize_id_clube!('20A01') }
-    end
-
-    def test_normalize_id_atleta_bang
-      assert_equal '12345', Client.normalize_id_atleta!('12345')
-      assert_raises(InvalidAthleteIdError) { Client.normalize_id_atleta!('xpto') }
-    end
-
     def test_calendario_json_calls_expected_path
       payload = { 'jogos' => {} }
       expected_path = '/api/cbf/calendario/jogos/2026/05/11'
@@ -53,7 +43,7 @@ module CbfCalendario
       end
     end
 
-    def test_jogos_pendentes_no_dia_filters_and_maps_horario
+    def test_jogos_do_dia_lists_all_games_including_placar
       payload = {
         'jogos' => {
           'Brasileiro' => {
@@ -84,11 +74,14 @@ module CbfCalendario
       }
 
       @client.stub(:get_json, payload) do
-        result = @client.jogos_pendentes_no_dia('11/05/2026')
-        assert_equal 2, result.size
-        assert_equal %w[1 2], result.map { |r| r[:id_jogo] }
+        result = @client.jogos_do_dia('11/05/2026')
+        assert_equal 3, result.size
+        assert_equal %w[1 2 3], result.map { |r| r[:id_jogo] }
         assert_equal '16:00', result.first[:horario]
-        refute result.first.key?(:placar_ou_horario)
+        assert_nil result.first[:placar]
+        jogo3 = result.find { |r| r[:id_jogo] == '3' }
+        assert_equal '1 x 0', jogo3[:placar]
+        assert_equal '20:00', jogo3[:horario]
       end
     end
 
@@ -111,88 +104,5 @@ module CbfCalendario
       end
     end
 
-    def test_atletas_do_clube_accepts_array_payload
-      payload = [{ 'id_atleta' => 1 }]
-      @client.stub(:get_json, payload) do
-        assert_equal({ clube_id: '20001', atletas: payload }, @client.atletas_do_clube('20001'))
-      end
-    end
-
-    def test_atletas_do_clube_accepts_hash_with_atletas
-      payload = { 'atletas' => [{ 'id_atleta' => 1 }] }
-      @client.stub(:get_json, payload) do
-        assert_equal({ clube_id: '20001', atletas: payload['atletas'] }, @client.atletas_do_clube('20001'))
-      end
-    end
-
-    def test_atletas_do_clube_raises_on_invalid_payload
-      @client.stub(:get_json, { 'foo' => [] }) do
-        assert_raises(HttpError) { @client.atletas_do_clube('20001') }
-      end
-    end
-
-    def test_atleta_por_id_success_from_hash_payload
-      @client.stub(:buscar_atleta_payload, { 'id_atleta' => '10', 'nome' => 'Teste' }) do
-        out = @client.atleta_por_id('10')
-        assert_equal '10', out[:atleta_id]
-        assert_equal 'Teste', out[:atleta]['nome']
-      end
-    end
-
-    def test_atleta_por_id_success_from_array_payload
-      payload = [{ 'id_atleta' => '10', 'nome' => 'Atleta 10' }, { 'id_atleta' => '11', 'nome' => 'Outro' }]
-      @client.stub(:buscar_atleta_payload, payload) do
-        out = @client.atleta_por_id('10')
-        assert_equal 'Atleta 10', out[:atleta]['nome']
-      end
-    end
-
-    def test_clube_por_id_success_from_api_payload
-      payload = { 'id_clube' => '20001', 'nome' => 'Corinthians' }
-      @client.stub(:buscar_clube_payload, payload) do
-        out = @client.clube_por_id('20001')
-        assert_equal '20001', out[:clube_id]
-        assert_equal 'Corinthians', out[:clube]['nome']
-      end
-    end
-
-    def test_clube_por_id_uses_scraping_fallback_when_api_fails
-      scraped = { 'id_clube' => 20001, 'nome' => 'Corinthians - SP', 'atletas' => [] }
-      @client.stub(:buscar_clube_payload, ->(_id) { raise HttpError, '404' }) do
-        @client.stub(:buscar_clube_por_scraping, scraped) do
-          out = @client.clube_por_id('20001')
-          assert_equal 'Corinthians - SP', out[:clube]['nome']
-        end
-      end
-    end
-
-    def test_clube_por_id_raises_when_api_and_fallback_fail
-      @client.stub(:buscar_clube_payload, ->(_id) { raise HttpError, '404' }) do
-        @client.stub(:buscar_clube_por_scraping, {}) do
-          assert_raises(HttpError) { @client.clube_por_id('20001') }
-        end
-      end
-    end
-
-    def test_busca_clube_por_scraping_extracts_data_from_public_pages
-      list_html = <<~HTML
-        <a href="/futebol-brasileiro/times/campeonato-brasileiro/serie-a/2026/20001">Corinthians</a>
-      HTML
-      detail_html = <<~HTML
-        <h1>Corinthians - SP</h1>
-        <table>
-          <tr><th>Nome</th><th>Apelido</th><th>Clube Atual</th></tr>
-          <tr><td>Nome Um</td><td>N1</td><td>Corinthians</td></tr>
-          <tr><td>Nome Dois</td><td>N2</td><td>Corinthians</td></tr>
-        </table>
-      HTML
-
-      @client.stub(:request_text, ->(uri) { uri.path == '/futebol-brasileiro/times' ? list_html : detail_html }) do
-        out = @client.send(:buscar_clube_por_scraping, '20001')
-        assert_equal 20001, out['id_clube']
-        assert_equal 'Corinthians - SP', out['nome']
-        assert_equal 2, out['atletas'].size
-      end
-    end
   end
 end

@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Betbrothers']
   spec.summary       = 'Cliente Ruby para o calendário de jogos da CBF (hashes, uso em Rails)'
   spec.description   = <<~DESC
-    Consulta a API pública de calendário da CBF e devolve jogos pendentes (sem placar)
+    Consulta a API pública de calendário da CBF e devolve todos os jogos do dia
     para uma data, como Array de hashes Ruby — adequado para uso em Ruby on Rails.
   DESC
   spec.license       = 'MIT'

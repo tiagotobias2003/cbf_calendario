@@ -4,11 +4,8 @@ Gem Ruby para consultar a API pública da CBF e retornar dados prontos para uso.
 
 ## O que a gem faz
 
-- Lista jogos pendentes (sem placar) por dia.
+- Lista todos os jogos do dia (calendário da API).
 - Busca a partida completa por `id_jogo`.
-- Busca atletas por `id_clube`.
-- Busca atleta por `id_atleta`.
-- Busca clube por `id_clube`.
 - Gera estatísticas agregadas da súmula.
 - Monta URLs públicas da CBF (partida e times).
 - Retorna hashes Ruby para facilitar integração.
@@ -39,20 +36,17 @@ require 'cbf_calendario'
 ```ruby
 require 'cbf_calendario'
 
-jogos = CbfCalendario.jogos_pendentes_no_dia('10/05/2026')
+jogos = CbfCalendario.jogos_do_dia('10/05/2026')
 partida = CbfCalendario.partida_completa('832031')
 jogo = CbfCalendario.jogo_partida('832031')
-atletas = CbfCalendario.atletas_do_clube('20001')
-atleta = CbfCalendario.atleta_por_id('12345')
-clube = CbfCalendario.clube_por_id('20001')
 stats = CbfCalendario.estatisticas_agregadas(jogo)
 ```
 
 ## Funcionalidades principais
 
-### 1) Jogos pendentes por data
+### 1) Jogos do dia
 
-Retorna apenas partidas ainda sem placar no dia informado.
+Retorna todas as partidas previstas ou já disputadas naquela data, conforme o calendário da CBF. Quando a API já trouxer placar, o campo `placar` vem preenchido (ex.: `"2 x 1"`); caso contrário, `placar` fica `nil` e `horario` reflete o horário previsto, se existir.
 
 ### 2) Partida completa por ID
 
@@ -71,29 +65,21 @@ Monta links da página da partida e das páginas de times.
 ### Módulo `CbfCalendario` (atalhos)
 
 - `CbfCalendario.parse_data_br!(str)`
-- `CbfCalendario.jogos_pendentes_no_dia(data, **opts)`
+- `CbfCalendario.jogos_do_dia(data, **opts)`
 - `CbfCalendario.partida_completa(id_jogo, **opts)`
 - `CbfCalendario.jogo_partida(id_jogo, **opts)`
-- `CbfCalendario.atletas_do_clube(id_clube, **opts)`
-- `CbfCalendario.atleta_por_id(id_atleta, **opts)`
-- `CbfCalendario.clube_por_id(id_clube, **opts)`
 - `CbfCalendario.estatisticas_agregadas(jogo)`
 
 ### Classe `CbfCalendario::Client`
 
 - `CbfCalendario::Client.new(base_url: ..., read_timeout: ..., open_timeout: ...)`
-- `client.jogos_pendentes_no_dia(data)`
+- `client.jogos_do_dia(data)`
 - `client.calendario_json(data)`
 - `client.partida_completa(id_jogo)`
 - `client.jogo_partida(id_jogo)`
-- `client.atletas_do_clube(id_clube)`
-- `client.atleta_por_id(id_atleta)`
-- `client.clube_por_id(id_clube)`
 - `CbfCalendario::Client.parse_data_br!(str)`
 - `CbfCalendario::Client.coerce_date!(data)`
 - `CbfCalendario::Client.normalize_id_jogo!(id_jogo)`
-- `CbfCalendario::Client.normalize_id_clube!(id_clube)`
-- `CbfCalendario::Client.normalize_id_atleta!(id_atleta)`
 
 ### Módulo `CbfCalendario::PartidaStats`
 
@@ -120,7 +106,7 @@ Monta links da página da partida e das páginas de times.
 # => #<Date: 2026-12-25 ...>
 ```
 
-### `CbfCalendario.jogos_pendentes_no_dia('10/05/2026')`
+### `CbfCalendario.jogos_do_dia('10/05/2026')`
 
 ```ruby
 # => [
@@ -130,11 +116,25 @@ Monta links da página da partida e das páginas de times.
 #        mandante: "Flamengo",
 #        visitante: "Bahia",
 #        horario: "16:00",
+#        placar: nil,
 #        data: "10/05/2026",
 #        data_iso: "2026-05-10",
 #        local: "Maracanã",
 #        rodada: "6",
 #        id_jogo: "832031"
+#      },
+#      {
+#        campeonato: "Campeonato Brasileiro",
+#        serie: "Série A",
+#        mandante: "Palmeiras",
+#        visitante: "São Paulo",
+#        horario: "",
+#        placar: "1 x 0",
+#        data: "10/05/2026",
+#        data_iso: "2026-05-10",
+#        local: "Allianz Parque",
+#        rodada: "6",
+#        id_jogo: "832032"
 #      }
 #    ]
 ```
@@ -179,57 +179,6 @@ Monta links da página da partida e das páginas de times.
 #    }
 ```
 
-### `CbfCalendario.atletas_do_clube('20001')`
-
-```ruby
-# => {
-#      clube_id: "20001",
-#      atletas: [
-#        {
-#          "id_atleta" => 12345,
-#          "nome_popular" => "Atleta Exemplo",
-#          "nome_completo" => "Atleta Exemplo da Silva",
-#          "posicao" => "MEI",
-#          ...
-#        }
-#      ]
-#    }
-```
-
-### `CbfCalendario.atleta_por_id('12345')`
-
-```ruby
-# => {
-#      atleta_id: "12345",
-#      atleta: {
-#        "id_atleta" => 12345,
-#        "nome_popular" => "Atleta Exemplo",
-#        "nome_completo" => "Atleta Exemplo da Silva",
-#        "posicao" => "ATA",
-#        ...
-#      }
-#    }
-```
-
-### `CbfCalendario.clube_por_id('20001')`
-
-```ruby
-# => {
-#      clube_id: "20001",
-#      clube: {
-#        "id_clube" => 20001,
-#        "nome" => "Time Exemplo",
-#        "competicao" => "campeonato-brasileiro",
-#        "categoria" => "serie-a",
-#        "ano" => "2026",
-#        "escudo" => "https://...",
-#        "pagina" => "https://www.cbf.com.br/futebol-brasileiro/times/...",
-#        "atletas" => [ ... ],
-#        ...
-#      }
-#    }
-```
-
 ### `CbfCalendario.estatisticas_agregadas(jogo)`
 
 ```ruby
@@ -260,8 +209,6 @@ Monta links da página da partida e das páginas de times.
 
 - `CbfCalendario::InvalidDateError`: data inválida (formato esperado: `dd/mm/aaaa`).
 - `CbfCalendario::InvalidGameIdError`: `id_jogo` inválido (somente dígitos).
-- `CbfCalendario::InvalidClubIdError`: `id_clube` inválido (somente dígitos).
-- `CbfCalendario::InvalidAthleteIdError`: `id_atleta` inválido (somente dígitos).
 - `CbfCalendario::HttpError`: erro HTTP ou payload inválido da API.
 - `CbfCalendario::Error`: classe base.
 
@@ -275,7 +222,7 @@ class CbfCalendarioSyncJob < ApplicationJob
 
   def perform(data_iso: nil)
     data = data_iso ? Date.iso8601(data_iso) : Date.current
-    CbfCalendario.jogos_pendentes_no_dia(data)
+    CbfCalendario.jogos_do_dia(data)
   end
 end
 ```
