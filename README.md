@@ -129,7 +129,7 @@ Monta links da página da partida e das páginas de times.
 #        serie: "Série A",
 #        mandante: "Flamengo",
 #        visitante: "Bahia",
-#        placar_ou_horario: "16:00",
+#        horario: "16:00",
 #        data: "10/05/2026",
 #        data_iso: "2026-05-10",
 #        local: "Maracanã",

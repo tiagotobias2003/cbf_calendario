@@ -104,7 +104,7 @@ module CbfCalendario
 
     # Aceita Date, Time ou String "dd/mm/aaaa".
     # Retorna Array<Hash> com símbolos como chaves, ordenado e sem IDs duplicados.
-    # Cada hash: +campeonato+, +serie+, +mandante+, +visitante+, +placar_ou_horario+,
+    # Cada hash: +campeonato+, +serie+, +mandante+, +visitante+, +horario+,
     # +data+, +data_iso+, +local+, +rodada+, +id_jogo+.
     def jogos_pendentes_no_dia(data)
       date = Client.coerce_date!(data)
@@ -210,12 +210,7 @@ module CbfCalendario
       end
     end
 
-    def placar_ou_horario(jogo)
-      gm = jogo.dig('mandante', 'gols')
-      gv = jogo.dig('visitante', 'gols')
-
-      return "#{gm} x #{gv}" unless gm.nil? || gv.nil?
-
+    def horario_jogo(jogo)
       jogo['hora'].to_s.strip
     end
 
@@ -243,7 +238,7 @@ module CbfCalendario
               serie: serie.to_s.strip,
               mandante: jogo.dig('mandante', 'nome').to_s.strip,
               visitante: jogo.dig('visitante', 'nome').to_s.strip,
-              placar_ou_horario: placar_ou_horario(jogo),
+              horario: horario_jogo(jogo),
               data: jogo['data'].to_s.strip,
               data_iso: data_calendario.strftime('%Y-%m-%d'),
               local: jogo['local'].to_s.strip,
