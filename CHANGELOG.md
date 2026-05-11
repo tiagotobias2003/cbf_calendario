@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3] - 2026-05-11
+
+- Suíte de testes Minitest completa no padrão Rails (`test/`) cobrindo módulo principal, `Client`, `PartidaStats` e `Urls`
+- `Rakefile` com task `rake test` para execução local da suíte
+- CI no GitHub Actions (`.github/workflows/test.yml`) para rodar testes em push/PR nas versões Ruby 3.2, 3.3 e 3.4
+- Dependências de desenvolvimento adicionadas: `rake` e `minitest (~> 5.22)`
+
 ## [0.3.2] - 2026-05-11
 
 - `Client#clube_por_id`: fallback para página pública de times quando endpoints `/api/cbf/clubes/*` e `/api/cbf/times/*` retornam 404

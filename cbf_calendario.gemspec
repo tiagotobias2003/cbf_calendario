@@ -24,4 +24,7 @@ Gem::Specification.new do |spec|
     %w[LICENSE.txt README.md CHANGELOG.md cbf_calendario.gemspec] + Dir['lib/**/*.rb']
   end
   spec.require_paths = ['lib']
+
+  spec.add_development_dependency 'minitest', '~> 5.22'
+  spec.add_development_dependency 'rake'
 end
