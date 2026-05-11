@@ -1,0 +1,22 @@
+# Changelog
+
+## [0.3.0] - 2026-05-11
+
+- `Client#atletas_do_clube` e atalho `CbfCalendario.atletas_do_clube`
+- `Client#atleta_por_id` e atalho `CbfCalendario.atleta_por_id`
+- `Client#clube_por_id` e atalho `CbfCalendario.clube_por_id`
+- Novos erros de validação: `InvalidClubIdError` e `InvalidAthleteIdError`
+- README simplificado e atualizado com as novas funções e exemplos de retorno
+
+## [0.2.0] - 2026-05-10
+
+- `Client#partida_completa` / `Client#jogo_partida` — API `/api/cbf/jogos/:id` (mesmo escopo de dados que `show_game.rb`)
+- `CbfCalendario.estatisticas_agregadas(jogo)` e `CbfCalendario::PartidaStats`
+- `CbfCalendario::Urls` — paths e URLs da página da partida e dos times
+- `InvalidGameIdError`; cliente com `open_timeout`
+
+## [0.1.0] - 2026-05-10
+
+- Primeira publicação no RubyGems
+- `CbfCalendario::Client` com `jogos_pendentes_no_dia` e `calendario_json`
+- Atalhos no módulo `CbfCalendario`

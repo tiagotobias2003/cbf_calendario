@@ -1,0 +1,24 @@
+PATH
+  remote: .
+  specs:
+    cbf_calendario (0.2.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  aarch64-linux-gnu
+  aarch64-linux-musl
+  arm-linux-gnu
+  arm-linux-musl
+  arm64-darwin
+  x86_64-darwin
+  x86_64-linux-gnu
+  x86_64-linux-musl
+
+DEPENDENCIES
+  cbf_calendario!
+
+BUNDLED WITH
+   2.6.9
