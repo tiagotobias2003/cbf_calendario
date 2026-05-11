@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.1] - 2026-05-11
+
+- `Client#jogos_pendentes_no_dia`: chave renomeada de `placar_ou_horario` para `horario`
+- README atualizado para refletir o novo formato de retorno dos jogos pendentes
+
 ## [0.3.0] - 2026-05-11
 
 - `Client#atletas_do_clube` e atalho `CbfCalendario.atletas_do_clube`
